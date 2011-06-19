@@ -7,7 +7,21 @@
 
 # ----- Modifiable RSync Options -----
 
-RSYNC_OPTIONS='-acvx'
+# Explanation of default options
+# a = archive mode; equals rlptgoD
+#    r = recurse into directories
+#    l = copy symlinks as symlinks
+#    p = preserve permissions
+#    t = preserve modification times
+#    g = preserve group
+#    o = preserve owner
+#    D = preserve device and special files
+# c = skip based on checksum, not mod-time & size
+# v = increase verbosity
+# x = don't cross filesystem boundaries
+# H = preserve hard links
+# S = handle sparse files efficiently
+RSYNC_OPTIONS='-acvxHS'
 
 # ----- Prepare Commands -----
 
