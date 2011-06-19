@@ -1,0 +1,158 @@
+#!/bin/bash
+# ------------------------------
+# RSnapshot type script
+# ------------------------------
+# Usage: RSyncSnapshot Source_Directory Target_Directory Number_of_Snapshots_to_Keep
+#           Optional_Log_File
+
+# ----- Prepare Commands -----
+
+ECHO=/bin/echo
+TEST=/bin/[
+SLEEP=/bin/sleep
+RM=/bin/rm
+EXPR=/bin/expr
+MV=/bin/mv
+RSYNC=/usr/local/bin/rsync
+TOUCH=/usr/bin/touch
+
+# ----- Initialize Variables -----
+
+SOURCE=$1
+TARGET=$2
+SNAPSHOT_COUNT=$3
+LOG_FILE=$4
+LINK_TARGET=
+
+# ----- Script -----
+
+# make things a bit more readable when we start echoing stuff
+$ECHO
+
+# make sure passed variables make sense
+if $TEST ! $SOURCE ]
+then
+   $ECHO "Usage: RSyncSnapshot Source_Directory Target_Directory"
+   $ECHO "   Number_of_Snapshots_to_Keep Optional_Log_File"
+   $ECHO
+   $ECHO "No source directory specified."
+   $ECHO
+   exit 1
+fi
+if $TEST ! -d $SOURCE ]
+then
+   $ECHO "Specified source directory ($SOURCE) doesn't exist."
+   $ECHO
+   exit 1
+fi
+
+if $TEST ! $TARGET ]
+then
+   $ECHO "Usage: RSyncSnapshot Source_Directory Target_Directory"
+   $ECHO "   Number_of_Snapshots_to_Keep Optional_Log_File"
+   $ECHO
+   $ECHO "No target directory specified."
+   $ECHO
+   exit 1
+fi
+if $TEST ! -d $TARGET ]
+then
+   $ECHO "Specified target directory ($TARGET) doesn't exist."
+   $ECHO
+   exit 1
+fi
+
+if $TEST ! $SNAPSHOT_COUNT ]
+then
+   $ECHO "Usage: RSyncSnapshot Source_Directory Target_Directory"
+   $ECHO "   Number_of_Snapshots_to_Keep Optional_Log_File"
+   $ECHO
+   $ECHO "Number of snapshots to keep not specified."
+   $ECHO
+   exit 1
+fi
+if $TEST $SNAPSHOT_COUNT -lt 1 ]
+then
+   $ECHO "Specified number of snapshots to keep can not be less than one."
+   $ECHO
+   exit 1
+fi
+
+# make sure no other instance of this script is running
+(set -C; : > /tmp/.RSyncSnapshotLock) 2> /dev/null
+if $TEST $? != "0" ]
+then
+   $ECHO "Another instance of the RSyncSnapshot script is already running."
+   $ECHO "Press Ctrl+C to cancel this script or if no other copy of RSnapshot"
+   $ECHO "is actually running delete the /tmp/.RSyncSnapshotLock file."
+   $ECHO
+   $ECHO -n "Waiting for the other instance of RSyncSnapshot to finish ..."
+
+   # check every 15 seconds if the other instance is done
+   $SLEEP 15
+   (set -C; : > /tmp/.RSyncSnapshotLock) 2> /dev/null
+   while $TEST $? != "0" ]
+   do
+      $ECHO -n "."
+      $SLEEP 15
+      (set -C; : > /tmp/.RSyncSnapshotLock) 2> /dev/null
+   done
+
+   # make things pretty
+   $ECHO
+   $ECHO
+fi
+
+# delete oldest snapshot if it exists
+if $TEST -d $TARGET/Snapshot.$SNAPSHOT_COUNT ]
+then
+   $ECHO "Deleting oldest snapshot (number $SNAPSHOT_COUNT) ..."
+   $RM -rf $TARGET/Snapshot.$SNAPSHOT_COUNT
+else
+   $ECHO "Oldest snapshot (number $SNAPSHOT_COUNT) doesn't exist yet."
+fi
+
+# make each snapshot one snapshot older
+while $TEST $SNAPSHOT_COUNT -gt 0 ]
+do
+   # make sure snapshot exists
+   if $TEST -d $TARGET/Snapshot.`$EXPR $SNAPSHOT_COUNT - 1` ]
+   then
+      $ECHO "Moving snapshot number `$EXPR $SNAPSHOT_COUNT - 1` to $SNAPSHOT_COUNT ..."
+      $MV $TARGET/Snapshot.`$EXPR $SNAPSHOT_COUNT - 1` $TARGET/Snapshot.$SNAPSHOT_COUNT
+   else
+      $ECHO "Snapshot number `$EXPR $SNAPSHOT_COUNT - 1` doesnt exist yet."
+   fi
+
+   # reduce SNAPSHOP_COUNT
+   let SNAPSHOT_COUNT=$SNAPSHOT_COUNT-1
+done
+
+# modify LOG_FILE variable if a log file was specified
+if $TEST $LOG_FILE ]
+then
+   LOG_FILE="--log-file=$LOG_FILE"
+fi
+
+# see if the directory we wanna link to exists already
+if $TEST -d $TARGET/Snapshot.1 ]
+then
+   LINK_TARGET='--link-dest=../Snapshot.1'
+fi
+
+# do the actual backup using rsync
+$ECHO "Backing up $SOURCE to snapshot number 0 ..."
+$ECHO
+$RSYNC -acvx --delete $LOG_FILE $LINK_TARGET $SOURCE $TARGET/Snapshot.0
+
+# update the time of the snapshot directory
+$TOUCH $TARGET/Snapshot.0
+
+# remove lock file
+$RM /tmp/.RSyncSnapshotLock
+
+# make things pretty
+$ECHO
+
+# all done
+exit 0
