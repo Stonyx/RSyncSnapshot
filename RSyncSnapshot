@@ -1,4 +1,21 @@
 #!/bin/bash
+#
+# Copyright (C) 2009-2011 Stonyx
+# http://www.stonyx.com
+#
+# This script is free software. You can redistribute it and/or modify it
+# under the terms of the GNU General Public License Version 2 (or at your
+# option any later version) as published by The Free Software Foundation.
+#
+# This script is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# General Public License for more details.
+#
+# If you did not received a copy of the GNU General Public License along
+# with this script see http://www.gnu.org/copyleft/gpl.html or write to
+# The Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
 # ------------------------------
 # RSnapshot type script
 # ------------------------------
@@ -25,6 +42,7 @@ RSYNC_OPTIONS='-acvxHS'
 
 # ----- Prepare Commands -----
 
+# Uncomment the following section if running on FreeNAS and comment the next section
 ECHO=/bin/echo
 TEST=/bin/[
 SLEEP=/bin/sleep
@@ -33,6 +51,16 @@ EXPR=/bin/expr
 MV=/bin/mv
 RSYNC=/usr/local/bin/rsync
 TOUCH=/usr/bin/touch
+
+# Uncomment the following section if running on Ubuntu and comment the previous section
+# ECHO=/bin/echo
+# TEST=[
+# SLEEP=/bin/sleep
+# RM=/bin/rm
+# EXPR=/usr/bin/expr
+# MV=/bin/mv
+# RSYNC=/usr/bin/rsync
+# TOUCH=/bin/touch
 
 # ----- Initialize Variables -----
 
