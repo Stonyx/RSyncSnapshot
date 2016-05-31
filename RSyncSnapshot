@@ -17,22 +17,22 @@
 # The Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 # ------------------------------
-# RSnapshot type script
+# RSnapshot Type Script
 # ------------------------------
 # Usage: RSyncSnapshot Source_Directory Target_Directory Number_of_Snapshots_to_Keep
-#           Log_File
+#          Log_File
 
 # ----- Modifiable RSync Options -----
 
 # Explanation of default options
 # a = archive mode; equals rlptgoD
-#    r = recurse into directories
-#    l = copy symlinks as symlinks
-#    p = preserve permissions
-#    t = preserve modification times
-#    g = preserve group
-#    o = preserve owner
-#    D = preserve device and special files
+#   r = recurse into directories
+#   l = copy symlinks as symlinks
+#   p = preserve permissions
+#   t = preserve modification times
+#   g = preserve group
+#   o = preserve owner
+#   D = preserve device and special files
 # c = skip based on checksum, not mod-time & size
 # v = increase verbosity
 # x = don't cross filesystem boundaries
@@ -74,166 +74,166 @@ RSYNC_LINK_TARGET=
 
 # ----- Script -----
 
-# make things a bit more readable when we start echoing stuff
+# Make things a bit more readable when we start echoing stuff
 $ECHO
 
-# make sure passed variables make sense
+# Make sure passed variables make sense
 if $TEST ! "$SOURCE" ]
 then
-   $ECHO "Usage: RSyncSnapshot Source_Directory Target_Directory"
-   $ECHO "   Number_of_Snapshots_to_Keep Optional_RSync_Option"
-   $ECHO "   Optional_RSync_Option Optional_RSync_Option"
-   $ECHO
-   $ECHO "No source directory specified."
-   $ECHO
-   exit 1
+  $ECHO "Usage: RSyncSnapshot Source_Directory Target_Directory"
+  $ECHO "   Number_of_Snapshots_to_Keep Optional_RSync_Option"
+  $ECHO "   Optional_RSync_Option Optional_RSync_Option"
+  $ECHO
+  $ECHO "No source directory specified."
+  $ECHO
+  exit 1
 fi
 if $TEST ! -d "$SOURCE" ]
 then
-   $ECHO "Specified source directory (\"$SOURCE\") doesn't exist."
-   $ECHO
-   exit 1
+  $ECHO "Specified source directory (\"$SOURCE\") doesn't exist."
+  $ECHO
+  exit 1
 fi
 
 if $TEST ! "$TARGET" ]
 then
-   $ECHO "Usage: RSyncSnapshot Source_Directory Target_Directory"
-   $ECHO "   Number_of_Snapshots_to_Keep Optional_RSync_Option"
-   $ECHO "   Optional_RSync_Option Optional_RSync_Option"
-   $ECHO
-   $ECHO "No target directory specified."
-   $ECHO
-   exit 1
+  $ECHO "Usage: RSyncSnapshot Source_Directory Target_Directory"
+  $ECHO "   Number_of_Snapshots_to_Keep Optional_RSync_Option"
+  $ECHO "   Optional_RSync_Option Optional_RSync_Option"
+  $ECHO
+  $ECHO "No target directory specified."
+  $ECHO
+  exit 1
 fi
 if $TEST ! -d "$TARGET" ]
 then
-   $ECHO "Specified target directory (\"$TARGET\") doesn't exist."
-   $ECHO
-   exit 1
+  $ECHO "Specified target directory (\"$TARGET\") doesn't exist."
+  $ECHO
+  exit 1
 fi
 
 if $TEST ! $SNAPSHOT_COUNT ]
 then
-   $ECHO "Usage: RSyncSnapshot Source_Directory Target_Directory"
-   $ECHO "   Number_of_Snapshots_to_Keep Optional_RSync_Option"
-   $ECHO "   Optional_RSync_Option Optional_RSync_Option"
-   $ECHO
-   $ECHO "Number of snapshots to keep not specified."
-   $ECHO
-   exit 1
+  $ECHO "Usage: RSyncSnapshot Source_Directory Target_Directory"
+  $ECHO "   Number_of_Snapshots_to_Keep Optional_RSync_Option"
+  $ECHO "   Optional_RSync_Option Optional_RSync_Option"
+  $ECHO
+  $ECHO "Number of snapshots to keep not specified."
+  $ECHO
+  exit 1
 fi
 if $TEST "`$EXPR $SNAPSHOT_COUNT - $SNAPSHOT_COUNT 2> /dev/null`" != "0" ]
 then
-   $ECHO "Specified number of snapshots to keep has to be a numeric value."
-   $ECHO
-   exit 1
+  $ECHO "Specified number of snapshots to keep has to be a numeric value."
+  $ECHO
+  exit 1
 fi
 if $TEST $SNAPSHOT_COUNT -lt 1 ]
 then
-   $ECHO "Specified number of snapshots to keep can not be less than one."
-   $ECHO
-   exit 1
+  $ECHO "Specified number of snapshots to keep can not be less than one."
+  $ECHO
+  exit 1
 fi
 
-# make sure no other instance of this script is running
+# Make sure no other instance of this script is running
 (set noclobber; : > "$LOCK_FILE") 2> /dev/null
 if $TEST $? != "0" ]
 then
-   $ECHO "Another instance of the RSyncSnapshot script is already running."
-   $ECHO "Press Ctrl+C to cancel this script or if no other copy of RSnapshot"
-   $ECHO "is actually running delete the \"$LOCK_FILE\" file."
-   $ECHO
-   $ECHO -n "Waiting for the other instance of RSyncSnapshot to finish ..."
-   $ECHO "RSyncSnapshot: Waiting for another instance of RSyncSnapshot to finish." \
-      >> "$LOG_FILE"
+  $ECHO "Another instance of the RSyncSnapshot script is already running."
+  $ECHO "Press Ctrl+C to cancel this script or if no other copy of RSnapshot"
+  $ECHO "is actually running delete the \"$LOCK_FILE\" file."
+  $ECHO
+  $ECHO -n "Waiting for the other instance of RSyncSnapshot to finish ..."
+  $ECHO "RSyncSnapshot: Waiting for another instance of RSyncSnapshot to finish." \
+    >> "$LOG_FILE"
 
-   # check every 15 seconds if the other instance is done
-   $SLEEP 15
-   (set noclobber; : > "$LOCK_FILE") 2> /dev/null
-   while $TEST $? != "0" ]
-   do
-      $ECHO -n "."
-      $SLEEP 15
-      (set noclobber; : > "$LOCK_FILE") 2> /dev/null
-   done
+  # Check every 15 seconds if the other instance is done
+  $SLEEP 15
+  (set noclobber; : > "$LOCK_FILE") 2> /dev/null
+  while $TEST $? != "0" ]
+  do
+    $ECHO -n "."
+    $SLEEP 15
+    (set noclobber; : > "$LOCK_FILE") 2> /dev/null
+  done
 
-   # make things pretty
-   $ECHO
-   $ECHO
+  # Make things pretty
+  $ECHO
+  $ECHO
 fi
 
-# delete oldest snapshot if it exists
+# Delete oldest snapshot if it exists
 if $TEST -e "$TARGET/Snapshot.$SNAPSHOT_COUNT" ]
 then
-   $ECHO "Removing oldest snapshot (number $SNAPSHOT_COUNT) ..."
-   $ECHO "RSyncSnapshot: Removing oldest snapshot (number $SNAPSHOT_COUNT)." \
-      >> "$LOG_FILE"
-   $RM -rf "$TARGET/Snapshot.$SNAPSHOT_COUNT"
+  $ECHO "Removing oldest snapshot (number $SNAPSHOT_COUNT) ..."
+  $ECHO "RSyncSnapshot: Removing oldest snapshot (number $SNAPSHOT_COUNT)." \
+    >> "$LOG_FILE"
+  $RM -rf "$TARGET/Snapshot.$SNAPSHOT_COUNT"
 else
-   $ECHO "Oldest snapshot (number $SNAPSHOT_COUNT) doesn't exist."
-   $ECHO "RSyncSnapshot: Oldest snapshot (number $SNAPSHOT_COUNT) doesn't exist." \
-      >> "$LOG_FILE"
+  $ECHO "Oldest snapshot (number $SNAPSHOT_COUNT) doesn't exist."
+  $ECHO "RSyncSnapshot: Oldest snapshot (number $SNAPSHOT_COUNT) doesn't exist." \
+    >> "$LOG_FILE"
 fi
 
-# make each snapshot one snapshot older
+# Make each snapshot one snapshot older
 while $TEST $SNAPSHOT_COUNT -gt 0 ]
 do
-   # reduce SNAPSHOP_COUNT by 1 (since we've already dealt with one snapshot above)
-   let SNAPSHOT_COUNT=$SNAPSHOT_COUNT-1
+  # Reduce SNAPSHOP_COUNT by 1 (since we've already dealt with one snapshot above)
+  let SNAPSHOT_COUNT=$SNAPSHOT_COUNT-1
 
-   # check if the snapshot might be a file instead of a directory since
-   # this happens when rsync failed to run correctly the last time
-   if $TEST -f "$TARGET/Snapshot.$SNAPSHOT_COUNT" ]
-   then
-      $ECHO "Removing invalid snapshot (number $SNAPSHOT_COUNT) ..."
-      $ECHO "RSyncSnapshot: Removing invalid snapshot (number $SNAPSHOT_COUNT)." \
-         >> "$LOG_FILE"
-      $RM -f "$TARGET/Snapshot.$SNAPSHOT_COUNT"
-   else
-      # check if it's a directory
-      if $TEST -d "$TARGET/Snapshot.$SNAPSHOT_COUNT" ]
-      then
-         $ECHO "Moving snapshot number $SNAPSHOT_COUNT to `$EXPR $SNAPSHOT_COUNT + 1` ..."
-         $ECHO "RSyncSnapshot: Moving snapshot number $SNAPSHOT_COUNT to `$EXPR \
-            $SNAPSHOT_COUNT + 1`." \
-            >> "$LOG_FILE"
-         $MV "$TARGET/Snapshot.$SNAPSHOT_COUNT" "$TARGET/Snapshot.`$EXPR $SNAPSHOT_COUNT + 1`"
-      # do the following if it doesn't exist at all
-      else
-         $ECHO "Snapshot number $SNAPSHOT_COUNT doesn't exist."
-         $ECHO "RSyncSnapshot: Snapshot number $SNAPSHOT_COUNT doesn't exist." \
-            >> "$LOG_FILE"
-      fi
-   fi
+  # Check if the snapshot might be a file instead of a directory since
+  #   this happens when rsync failed to run correctly the last time
+  if $TEST -f "$TARGET/Snapshot.$SNAPSHOT_COUNT" ]
+  then
+    $ECHO "Removing invalid snapshot (number $SNAPSHOT_COUNT) ..."
+    $ECHO "RSyncSnapshot: Removing invalid snapshot (number $SNAPSHOT_COUNT)." \
+      >> "$LOG_FILE"
+    $RM -f "$TARGET/Snapshot.$SNAPSHOT_COUNT"
+  else
+    # check if it's a directory
+    if $TEST -d "$TARGET/Snapshot.$SNAPSHOT_COUNT" ]
+    then
+      $ECHO "Moving snapshot number $SNAPSHOT_COUNT to `$EXPR $SNAPSHOT_COUNT + 1` ..."
+      $ECHO "RSyncSnapshot: Moving snapshot number $SNAPSHOT_COUNT to `$EXPR \
+        $SNAPSHOT_COUNT + 1`." \
+        >> "$LOG_FILE"
+      $MV "$TARGET/Snapshot.$SNAPSHOT_COUNT" "$TARGET/Snapshot.`$EXPR $SNAPSHOT_COUNT + 1`"
+    # do the following if it doesn't exist at all
+    else
+      $ECHO "Snapshot number $SNAPSHOT_COUNT doesn't exist."
+      $ECHO "RSyncSnapshot: Snapshot number $SNAPSHOT_COUNT doesn't exist." \
+        >> "$LOG_FILE"
+    fi
+  fi
 done
 
-# see if the directory we wanna link to exists already
+# See if the directory we wanna link to exists already
 if $TEST -d "$TARGET/Snapshot.1" ]
 then
-   RSYNC_LINK_TARGET='--link-dest=../Snapshot.1'
+  RSYNC_LINK_TARGET='--link-dest=../Snapshot.1'
 fi
 
-# do the actual backup using rsync
+# Do the actual backup using rsync
 $ECHO "Backing up \"$SOURCE\" to snapshot number 0 using the command below ..."
 $ECHO "$RSYNC $RSYNC_OPTIONS $RSYNC_LINK_TARGET \\"
 $ECHO "\"$RSYNC_LOG_FILE\" \"$SOURCE\" \"$TARGET/Snapshot.0\""
 $ECHO
 $ECHO "RSyncSnapshot: Backing up \"$SOURCE\" to snapshot number 0 using the command below:" \
-   >> "$LOG_FILE"
+  >> "$LOG_FILE"
 $ECHO "RSyncSnapshot: $RSYNC $RSYNC_OPTIONS $RSYNC_LINK_TARGET \\" \
-   >> "$LOG_FILE"
+  >> "$LOG_FILE"
 $ECHO "RSyncSnapshot: \"$RSYNC_LOG_FILE\" \"$SOURCE\" \"$TARGET/Snapshot.0\"" \
-   >> "$LOG_FILE"
+  >> "$LOG_FILE"
 $RSYNC $RSYNC_OPTIONS $RSYNC_LINK_TARGET "$RSYNC_LOG_FILE" "$SOURCE" "$TARGET/Snapshot.0"
 
-# update the time of the snapshot directory
+# Update the time of the snapshot directory
 $TOUCH "$TARGET/Snapshot.0"
 
-# remove lock file
+# Remove lock file
 $RM -f "$LOCK_FILE"
 
-# make things pretty
+# Make things pretty
 $ECHO
 
-# all done
+# All done
 exit 0
