@@ -62,11 +62,6 @@ TOUCH=/usr/bin/touch
 # S = handle sparse files efficiently
 RSYNC_OPTIONS="-acvxHS"
 
-# ----- Initialize Variables -----
-
-RSYNC_LOG_FILE="--log-file=$LOG_FILE"
-RSYNC_LINK_TARGET=
-
 # ----- Script -----
 
 # Make things pretty
@@ -154,8 +149,11 @@ then
   $ECHO "is actually running delete the \"$LOCK_FILE\" file."
   $ECHO
   $ECHO -n "Waiting for the other instance of RSyncSnapshot to finish ..."
-  $ECHO "RSyncSnapshot: Waiting for another instance of RSyncSnapshot to finish." >> \
-    "$LOG_FILE"
+  if [[ $LOG_FILE ]]
+  then
+    $ECHO "RSyncSnapshot: Waiting for another instance of RSyncSnapshot to finish." >> \
+      "$LOG_FILE"
+  fi
 
   # Check every 15 seconds if the other instance is done
   $SLEEP 15
@@ -177,13 +175,19 @@ fi
 if [[ -e "$TARGET/Snapshot.$SNAPSHOT_COUNT" ]]
 then
   $ECHO "Deleting oldest snapshot (number $SNAPSHOT_COUNT) ..."
-  $ECHO "RSyncSnapshot: Deleting oldest snapshot (number $SNAPSHOT_COUNT)." >> \
-    "$LOG_FILE"
+  if [[ $LOG_FILE ]]
+  then
+    $ECHO "RSyncSnapshot: Deleting oldest snapshot (number $SNAPSHOT_COUNT)." >> \
+      "$LOG_FILE"
+  fi
   $RM -rf "$TARGET/Snapshot.$SNAPSHOT_COUNT"
 else
   $ECHO "Oldest snapshot (number $SNAPSHOT_COUNT) doesn't exist."
-  $ECHO "RSyncSnapshot: Oldest snapshot (number $SNAPSHOT_COUNT) doesn't exist." >> \
-    "$LOG_FILE"
+  if [[ $LOG_FILE ]]
+  then
+    $ECHO "RSyncSnapshot: Oldest snapshot (number $SNAPSHOT_COUNT) doesn't exist." >> \
+      "$LOG_FILE"
+  fi
 fi
 
 # Make each snapshot one snapshot older
@@ -196,13 +200,19 @@ do
   if [[ -e "$TARGET/Snapshot.$SNAPSHOT_COUNT" ]]
   then
     $ECHO "Moving snapshot number $SNAPSHOT_COUNT to $($EXPR $SNAPSHOT_COUNT + 1) ..."
-    $ECHO "RSyncSnapshot: Moving snapshot number $SNAPSHOT_COUNT to $($EXPR \
-      $SNAPSHOT_COUNT + 1)." >> "$LOG_FILE"
+    if [[ $LOG_FILE ]]
+    then
+      $ECHO "RSyncSnapshot: Moving snapshot number $SNAPSHOT_COUNT to $($EXPR \
+        $SNAPSHOT_COUNT + 1)." >> "$LOG_FILE"
+    fi
     $MV -f "$TARGET/Snapshot.$SNAPSHOT_COUNT" "$TARGET/Snapshot.$($EXPR $SNAPSHOT_COUNT + 1)"
   else
     $ECHO "Snapshot number $SNAPSHOT_COUNT doesn't exist."
-    $ECHO "RSyncSnapshot: Snapshot number $SNAPSHOT_COUNT doesn't exist." >> \
-      "$LOG_FILE"
+    if [[ $LOG_FILE ]]
+    then
+      $ECHO "RSyncSnapshot: Snapshot number $SNAPSHOT_COUNT doesn't exist." >> \
+        "$LOG_FILE"
+    fi
   fi
 done
 
@@ -226,10 +236,13 @@ RSYNC_COMMAND+="\"$TARGET\" "
 $ECHO "Backing up \"$SOURCE\" to snapshot number 0 using the command below ..."
 $ECHO "$RSYNC_COMMAND"
 $ECHO
-$ECHO "RSyncSnapshot: Backing up \"$SOURCE\" to snapshot number 0 using the command below:" >> \
-  "$LOG_FILE"
-$ECHO "RSyncSnapshot: $RSYNC_COMMAND" >> "$LOG_FILE"
-$ECHO >> "$LOG_FILE"
+if [[ $LOG_FILE ]]
+then
+  $ECHO "RSyncSnapshot: Backing up \"$SOURCE\" to snapshot number 0 using the command below:" >> \
+    "$LOG_FILE"
+  $ECHO "RSyncSnapshot: $RSYNC_COMMAND" >> "$LOG_FILE"
+  $ECHO >> "$LOG_FILE"
+fi
 $RSYNC_COMMAND
 
 # Update the time of the snapshot directory
@@ -240,7 +253,10 @@ $RM -f "$LOCK_FILE"
 
 # Make things pretty
 $ECHO
-$ECHO >> "$LOG_FILE"
+if [[ $LOG_FILE ]]
+then
+  $ECHO >> "$LOG_FILE"
+fi
 
 # All done
 exit 0
