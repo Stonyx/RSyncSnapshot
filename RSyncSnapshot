@@ -20,7 +20,7 @@
 # RSnapshot Type Script
 # ------------------------------
 # Usage: RSyncSnapshot Source_Directory Target_Directory Number_of_Snapshots_to_Keep
-#          Optional_Log_File Custom_Lock_File
+#          Log_File Lock_File Optional_Additional_RSync_Arguments ...
 
 # ----- Commands -----
 
@@ -71,8 +71,8 @@ $ECHO
 if [[ ! $1 ]]
 then
   $ECHO "Usage: RSyncSnapshot Source_Directory Target_Directory"
-  $ECHO "   Number_of_Snapshots_to_Keep Optional_Log_File"
-  $ECHO "   Custom_Lock_File"
+  $ECHO "  Number_of_Snapshots_to_Keep Log_File Lock_File"
+  $ECHO "  Optional_Additional_RSync_Arguments ..."
   $ECHO
   $ECHO "Source directory not specified."
   $ECHO
@@ -90,8 +90,8 @@ fi
 if $[[ ! $2 ]]
 then
   $ECHO "Usage: RSyncSnapshot Source_Directory Target_Directory"
-  $ECHO "   Number_of_Snapshots_to_Keep Optional_Log_File"
-  $ECHO "   Custom_Lock_File"
+  $ECHO "  Number_of_Snapshots_to_Keep Log_File Lock_File"
+  $ECHO "  Optional_Additional_RSync_Arguments ..."
   $ECHO
   $ECHO "Target directory not specified."
   $ECHO
@@ -109,8 +109,8 @@ fi
 if [[ ! $3 ]]
 then
   $ECHO "Usage: RSyncSnapshot Source_Directory Target_Directory"
-  $ECHO "   Number_of_Snapshots_to_Keep Optional_Log_File"
-  $ECHO "   Custom_Lock_File"
+  $ECHO "  Number_of_Snapshots_to_Keep Log_File Lock_File"
+  $ECHO "  Optional_Additional_RSync_Arguments ..."
   $ECHO
   $ECHO "Number of snapshots to keep not specified."
   $ECHO
@@ -131,15 +131,30 @@ then
 fi
 
 # Process the log file argument
+if [[ ! $4 ]]
+then
+  $ECHO "Usage: RSyncSnapshot Source_Directory Target_Directory"
+  $ECHO "  Number_of_Snapshots_to_Keep Log_File Lock_File"
+  $ECHO "  Optional_Additional_RSync_Arguments ..."
+  $ECHO
+  $ECHO "Log file not specified."
+  $ECHO
+  exit 1
+fi
 LOG_FILE=$4
 
 # Process the lock file argument
 if [[ ! $5 ]]
 then
-  LOCK_FILE="/mnt/.RSyncSnapshotLock"
-else
-  LOCK_FILE=$5  
+  $ECHO "Usage: RSyncSnapshot Source_Directory Target_Directory"
+  $ECHO "  Number_of_Snapshots_to_Keep Log_File Lock_File"
+  $ECHO "  Optional_Additional_RSync_Arguments ..."
+  $ECHO
+  $ECHO "Lock file not specified."
+  $ECHO
+  exit 1
 fi
+LOCK_FILE=$5  
 
 # Make sure no other instance of this script is running
 if [[ -e $LOCK_FILE ]]
@@ -225,10 +240,11 @@ if [[ -e "$TARGET/Snapshot.1" ]]
 then
   RSYNC_COMMAND+="\"--link-dest=../Snapshot.1\" "
 fi
-if [[ $LOG_FILE ]]
-then
-  RSYNC_COMMAND+="\"--log-file=$LOG_FILE\" "
-fi
+RSYNC_COMMAND+="\"--log-file=$LOG_FILE\" "
+for (( i=5; i<$#; i++ ))
+do
+  RSYNC_COMMAND+="\"$@[$i]\" "
+done
 RSYNC_COMMAND+="\"$SOURCE\" "
 RSYNC_COMMAND+="\"$TARGET\" "
 
