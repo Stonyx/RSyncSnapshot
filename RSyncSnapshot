@@ -87,7 +87,7 @@ then
 fi
 
 # Process the target argument
-if $[[ ! $2 ]]
+if [[ ! $2 ]]
 then
   $ECHO "Usage: RSyncSnapshot Source_Directory Target_Directory"
   $ECHO "  Number_of_Snapshots_to_Keep Log_File Lock_File"
@@ -117,7 +117,7 @@ then
   exit 1
 fi
 SNAPSHOT_COUNT=$3
-if [[ ! $SNAPSHOT_COUNT =~ "^\d+$" ]]
+if [[ ! $SNAPSHOT_COUNT =~ ^\\d+$ ]]
 then
   $ECHO "Specified number of snapshots to keep has to be a numeric value."
   $ECHO
