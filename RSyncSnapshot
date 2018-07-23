@@ -254,7 +254,7 @@ do
   RSYNC_COMMAND+="\"$@[$i]\" "
 done
 RSYNC_COMMAND+="\"$SOURCE\" "
-RSYNC_COMMAND+="\"$TARGET/Snapshot.0\" "
+RSYNC_COMMAND+="\"$TARGET/Snapshot.0\""
 
 # Do the actual backup using RSync
 $ECHO "Backing up \"$SOURCE\" to snapshot number 0 using the command below ..."
