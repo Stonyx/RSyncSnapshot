@@ -1,26 +1,25 @@
 #!/bin/bash
 #
-# Copyright (C) 2009-2011 Stonyx
+# Copyright (C) 2009-2018 Stonyx
 # http://www.stonyx.com
 #
-# This script is free software. You can redistribute it and/or modify it
-# under the terms of the GNU General Public License Version 2 (or at your
-# option any later version) as published by The Free Software Foundation.
+# This script is free software. You can redistribute it and/or modify it under the terms of the GNU
+# General Public License Version 2 (or at your option any later version) as published by The Free
+# Software Foundation.
 #
-# This script is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# This script is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+# even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 # General Public License for more details.
 #
-# If you did not received a copy of the GNU General Public License along
-# with this script see http://www.gnu.org/copyleft/gpl.html or write to
-# The Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+# If you did not received a copy of the GNU General Public License along with this script see
+# http://www.gnu.org/copyleft/gpl.html or write to The Free Software Foundation, 675 Mass Ave,
+# Cambridge, MA 02139, USA.
 
 # ------------------------------
 # RSnapshot Type Script
 # ------------------------------
-# Usage: RSyncSnapshot Source_Directory Target_Directory Number_of_Snapshots_to_Keep
-#          Log_File Lock_File Optional_Additional_RSync_Arguments ...
+# Usage: RSyncSnapshot Source_Directory Target_Directory Number_of_Snapshots_to_Keep Log_File
+#          Lock_File Optional_Additional_RSync_Arguments ...
 
 # ----- Commands -----
 
@@ -28,7 +27,6 @@
 ECHO=/bin/echo
 SLEEP=/bin/sleep
 RM=/bin/rm
-EXPR=/bin/expr
 MV=/bin/mv
 MKDIR=/bin/mkdir
 RSYNC=/usr/local/bin/rsync
@@ -38,7 +36,6 @@ TOUCH=/usr/bin/touch
 # ECHO=/bin/echo
 # SLEEP=/bin/sleep
 # RM=/bin/rm
-# EXPR=/usr/bin/expr
 # MV=/bin/mv
 # MKDIR=/bin/mkdir
 # RSYNC=/usr/bin/rsync
@@ -117,7 +114,7 @@ then
   exit 1
 fi
 SNAPSHOT_COUNT=$3
-if [[ ! $SNAPSHOT_COUNT =~ ^\\d+$ ]]
+if [[ ! $SNAPSHOT_COUNT =~ ^[0-9]+$ ]]
 then
   $ECHO "Specified number of snapshots to keep has to be a numeric value."
   $ECHO
@@ -164,11 +161,7 @@ then
   $ECHO "is actually running delete the \"$LOCK_FILE\" file."
   $ECHO
   $ECHO -n "Waiting for the other instance of RSyncSnapshot to finish ..."
-  if [[ $LOG_FILE ]]
-  then
-    $ECHO "RSyncSnapshot: Waiting for another instance of RSyncSnapshot to finish." >> \
-      "$LOG_FILE"
-  fi
+  $ECHO "RSyncSnapshot: Waiting for another instance of RSyncSnapshot to finish." >> "$LOG_FILE"
 
   # Check every 15 seconds if the other instance is done
   $SLEEP 15
@@ -186,80 +179,92 @@ fi
 # Create the lock file
 : > "$LOCK_FILE"
 
-# Delete the oldest snapshot if it exists
-if [[ -e "$TARGET/Snapshot.$SNAPSHOT_COUNT" ]]
+# Find the first snapshots that doesn't exist
+SNAPSHOT=0
+while [[ $SNAPSHOT -le $SNAPSHOT_COUNT ]]
+do
+  # Check if the snapshot directory doesn't exist
+  if [[ ! -d "$TARGET/Snapshot.$SNAPSHOT" ]]
+  then
+    break
+  fi
+
+  # Increment the counter by 1
+  SNAPSHOT=$((SNAPSHOT+1))
+done
+if [[ $SNAPSHOT -eq $((SNAPSHOT_COUNT+1)) ]]
 then
-  $ECHO "Deleting oldest snapshot (number $SNAPSHOT_COUNT) ..."
-  if [[ $LOG_FILE ]]
-  then
-    $ECHO "RSyncSnapshot: Deleting oldest snapshot (number $SNAPSHOT_COUNT)." >> \
-      "$LOG_FILE"
-  fi
-  $RM -rf "$TARGET/Snapshot.$SNAPSHOT_COUNT"
-else
-  $ECHO "Oldest snapshot (number $SNAPSHOT_COUNT) doesn't exist."
-  if [[ $LOG_FILE ]]
-  then
-    $ECHO "RSyncSnapshot: Oldest snapshot (number $SNAPSHOT_COUNT) doesn't exist." >> \
-      "$LOG_FILE"
-  fi
+  SNAPSHOT=-1
 fi
 
-# Make each snapshot one snapshot older
-while [[ $SNAPSHOT_COUNT -gt 0 ]]
-do
-  # Reduce SNAPSHOP_COUNT by 1 (since we've already dealt with one snapshot above)
-  SNAPSHOT_COUNT=$SNAPSHOT_COUNT-1
+# Delete the oldest snapshot if all snapshots exist
+if [[ $SNAPSHOT -eq -1 ]]
+then
+  $ECHO "Deleting oldest snapshot (number $SNAPSHOT_COUNT) ..."
+  $ECHO "RSyncSnapshot: Deleting oldest snapshot (number $SNAPSHOT_COUNT)." >> "$LOG_FILE"
+  $RM -rf "$TARGET/Snapshot.$SNAPSHOT_COUNT"
+fi
 
-  # Check if the snapshot exists
-  if [[ -e "$TARGET/Snapshot.$SNAPSHOT_COUNT" ]]
-  then
-    $ECHO "Moving snapshot number $SNAPSHOT_COUNT to $($EXPR $SNAPSHOT_COUNT + 1) ..."
-    if [[ $LOG_FILE ]]
-    then
-      $ECHO "RSyncSnapshot: Moving snapshot number $SNAPSHOT_COUNT to $($EXPR \
-        $SNAPSHOT_COUNT + 1)." >> "$LOG_FILE"
-    fi
-    $MV -f "$TARGET/Snapshot.$SNAPSHOT_COUNT" "$TARGET/Snapshot.$($EXPR $SNAPSHOT_COUNT + 1)"
-  else
-    $ECHO "Snapshot number $SNAPSHOT_COUNT doesn't exist."
-    if [[ $LOG_FILE ]]
-    then
-      $ECHO "RSyncSnapshot: Snapshot number $SNAPSHOT_COUNT doesn't exist." >> \
-        "$LOG_FILE"
-    fi
-  fi
+# Make each snapshot one snapshot older (up to the first snapshot that doens't exist)
+if [[ $SNAPSHOT -eq -1 ]]
+then
+  SNAPSHOT=$SNAPSHOT_COUNT
+fi
+while [[ $SNAPSHOT -gt 0 ]]
+do
+  # Reduce the counter by 1
+  SNAPSHOT=$((SNAPSHOT-1))
+
+  # Move the snapshot
+  $ECHO "Moving snapshot number $SNAPSHOT to $((SNAPSHOT+1)) ..."
+  $ECHO "RSyncSnapshot: Moving snapshot number $SNAPSHOT to $((SNAPSHOT+1))." >> "$LOG_FILE"
+  $MV -f "$TARGET/Snapshot.$SNAPSHOT" "$TARGET/Snapshot.$((SNAPSHOT+1))"
 done
+
+# Find the first snapshot that exists
+SNAPSHOT=1
+while [[ $SNAPSHOT -le $SNAPSHOT_COUNT ]]
+do
+  # Check if the snapshot directory exists
+  if [[ -d "$TARGET/Snapshot.$SNAPSHOT" ]]
+  then
+    break
+  fi
+
+  # Increment the counter by 1
+  SNAPSHOT=$((SNAPSHOT+1))
+done
+if [[ $SNAPSHOT -eq $((SNAPSHOT_COUNT+1)) ]]
+then
+  SNAPSHOT=-1
+fi
 
 # Create the snapshot directory
 $MKDIR "$TARGET/Snapshot.0"
 
 # Create the RSync command
 RSYNC_COMMAND="$RSYNC $RSYNC_OPTIONS "
-if [[ -e "$TARGET/Snapshot.1" ]]
+if [[ $SNAPSHOT -ne -1 ]]
 then
-  RSYNC_COMMAND+="\"--link-dest=../Snapshot.1\" "
+  RSYNC_COMMAND+="--link-dest=\"../Snapshot.$SNAPSHOT\" "
 fi
-RSYNC_COMMAND+="\"--log-file=$LOG_FILE\" "
+RSYNC_COMMAND+="--log-file=\"$LOG_FILE\" "
 for (( i=5; i<$#; i++ ))
 do
   RSYNC_COMMAND+="\"$@[$i]\" "
 done
 RSYNC_COMMAND+="\"$SOURCE\" "
-RSYNC_COMMAND+="\"$TARGET\" "
+RSYNC_COMMAND+="\"$TARGET/Snapshot.0\" "
 
 # Do the actual backup using RSync
 $ECHO "Backing up \"$SOURCE\" to snapshot number 0 using the command below ..."
 $ECHO "$RSYNC_COMMAND"
 $ECHO
-if [[ $LOG_FILE ]]
-then
-  $ECHO "RSyncSnapshot: Backing up \"$SOURCE\" to snapshot number 0 using the command below:" >> \
-    "$LOG_FILE"
-  $ECHO "RSyncSnapshot: $RSYNC_COMMAND" >> "$LOG_FILE"
-  $ECHO >> "$LOG_FILE"
-fi
-$RSYNC_COMMAND
+$ECHO "RSyncSnapshot: Backing up \"$SOURCE\" to snapshot number 0 using the command below:" >> \
+  "$LOG_FILE"
+$ECHO "RSyncSnapshot: $RSYNC_COMMAND" >> "$LOG_FILE"
+$ECHO >> "$LOG_FILE"
+eval $RSYNC_COMMAND
 
 # Update the time of the snapshot directory
 $TOUCH "$TARGET/Snapshot.0"
@@ -269,10 +274,7 @@ $RM -f "$LOCK_FILE"
 
 # Make things pretty
 $ECHO
-if [[ $LOG_FILE ]]
-then
-  $ECHO >> "$LOG_FILE"
-fi
+$ECHO >> "$LOG_FILE"
 
 # All done
 exit 0
