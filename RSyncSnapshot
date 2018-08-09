@@ -4,7 +4,7 @@
 # http://www.stonyx.com
 #
 # This script is free software. You can redistribute it and/or modify it under the terms of the GNU
-# General Public License Version 2 (or at your option any later version) as published by The Free
+# General Public License Version 3 (or at your option any later version) as published by The Free
 # Software Foundation.
 #
 # This script is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
@@ -23,7 +23,7 @@
 
 # ----- Commands -----
 
-# Uncomment the following section if running on FreeNAS and comment the next section
+# NAS4Free command locations
 ECHO=/bin/echo
 SLEEP=/bin/sleep
 RM=/bin/rm
@@ -31,15 +31,6 @@ MV=/bin/mv
 MKDIR=/bin/mkdir
 RSYNC=/usr/local/bin/rsync
 TOUCH=/usr/bin/touch
-
-# Uncomment the following section if running on Ubuntu and comment the previous section
-# ECHO=/bin/echo
-# SLEEP=/bin/sleep
-# RM=/bin/rm
-# MV=/bin/mv
-# MKDIR=/bin/mkdir
-# RSYNC=/usr/bin/rsync
-# TOUCH=/bin/touch
 
 # ----- RSync Options -----
 
@@ -94,7 +85,7 @@ then
   $ECHO
   exit 1
 fi
-TARGET=$2
+TARGET=${2%/}
 if [[ ! -d $TARGET ]]
 then
   $ECHO "Specified target directory (\"$TARGET\") doesn't exist."
